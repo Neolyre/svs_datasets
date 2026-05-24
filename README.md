@@ -2,7 +2,8 @@
 
 Utilities for loading most singing voice dataset labels from [this list](github.com/openvpi/MakeDiffSinger/wiki/Public-datasets)
 into a coherent format. In particular, normalizes each into a shared phoneset for each language
-based loosely around the [SynthV phonesets](https://manual.synthv.info/phonemes/).
+based loosely around the [SynthV phonesets](https://manual.synthv.info/phonemes/). These phonesets
+can be found at `preprocessing/phonesets/phonesets.py`.
 
 **DOES NOT load audio!!!** Use or write a binarizer for that.
 
