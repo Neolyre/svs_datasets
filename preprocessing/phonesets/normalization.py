@@ -22,6 +22,30 @@ class JapaneseLabNormalizationConfig:
 
 DEFAULT_JAPANESE_LAB_NORMALIZATION = JapaneseLabNormalizationConfig()
 
+_COMMON_SPECIAL_PHONE_ALIASES = {
+    "<ap>": "AP",
+    "ap": "AP",
+    "br": "AP",
+    "breath": "AP",
+    "breathe": "AP",
+    "ep": "AP",
+    # TODO: figure out if this is true across datasets?
+    # also, there are many cases where AP is labeled for a few seconds,
+    # which comprises a long silence with a breath at the very end. this
+    # should really be marked as SP then AP but TBD how to fix this
+    "pau": "AP",
+    "pause": "AP",
+    "<sp>": "SP",
+    "<sil>": "SP",
+    "sil": "SP",
+    "silence": "SP",
+    "sp": "SP",
+}
+
+
+def _normalize_common_special_phone(label: str) -> str | None:
+    return _COMMON_SPECIAL_PHONE_ALIASES.get(label.strip().lower())
+
 
 def normalize_japanese_lab_phone(
     label: str,
@@ -40,38 +64,13 @@ def normalize_japanese_lab_phone(
     return normalized
 
 
-def normalize_english_dataset_phone(label: str, *, source_dataset: str) -> str:
-    normalized = label.strip()
-    if not normalized:
-        return normalized
-    return ENGLISH_DATASET_PHONE_FOLD_MAPS.get(source_dataset, {}).get(
-        normalized, normalized
-    )
-
-
-def normalize_japanese_dataset_phone(
-    label: str,
-    *,
-    source_dataset: str,
-    config: JapaneseLabNormalizationConfig = DEFAULT_JAPANESE_LAB_NORMALIZATION,
-) -> str:
-    normalized = label.strip()
-    if not normalized:
-        return normalized
-    normalized = JAPANESE_DATASET_PHONE_FOLD_MAPS.get(source_dataset, {}).get(
-        normalized, normalized
-    )
-    return normalize_japanese_lab_phone(normalized, config=config)
-
-
 def normalize_gtsinger_english_phone(label: str) -> str:
     normalized = label.strip()
     if not normalized:
         return normalized
-    if normalized == "<AP>":
-        return "AP"
-    if normalized == "<SP>":
-        return "SP"
+    special_phone = _normalize_common_special_phone(normalized)
+    if special_phone is not None:
+        return special_phone
     if normalized == "ou":
         return "ow"
     normalized = re.sub(r"\d+$", "", normalized)
@@ -86,6 +85,9 @@ def normalize_gtsinger_japanese_phone(
     normalized = label.strip()
     if not normalized:
         return normalized
+    special_phone = _normalize_common_special_phone(normalized)
+    if special_phone is not None:
+        return special_phone
     if normalized in {"i̥", "ɨ̥", "ɯ̥"}:
         devoiced = "I" if normalized == "i̥" else "U"
         return normalize_japanese_lab_phone(devoiced, config=config)
@@ -99,7 +101,40 @@ def normalize_gtsinger_chinese_phone(label: str) -> str:
     normalized = label.strip()
     if not normalized:
         return normalized
+    special_phone = _normalize_common_special_phone(normalized)
+    if special_phone is not None:
+        return special_phone
     return MANDARIN_PHONE_FOLD_MAP.get(normalized, normalized)
+
+
+def normalize_english_dataset_phone(label: str, *, source_dataset: str) -> str:
+    normalized = label.strip()
+    if not normalized:
+        return normalized
+    special_phone = _normalize_common_special_phone(normalized)
+    if special_phone is not None:
+        return special_phone
+    return ENGLISH_DATASET_PHONE_FOLD_MAPS.get(source_dataset, {}).get(
+        normalized, normalized
+    )
+
+
+def normalize_japanese_dataset_phone(
+    label: str,
+    *,
+    source_dataset: str,
+    config: JapaneseLabNormalizationConfig = DEFAULT_JAPANESE_LAB_NORMALIZATION,
+) -> str:
+    normalized = label.strip()
+    if not normalized:
+        return normalized
+    special_phone = _normalize_common_special_phone(normalized)
+    if special_phone is not None:
+        return special_phone
+    normalized = JAPANESE_DATASET_PHONE_FOLD_MAPS.get(source_dataset, {}).get(
+        normalized, normalized
+    )
+    return normalize_japanese_lab_phone(normalized, config=config)
 
 
 def normalize_mandarin_dataset_phone(
@@ -110,6 +145,9 @@ def normalize_mandarin_dataset_phone(
     normalized = label.strip()
     if not normalized:
         return normalized
+    special_phone = _normalize_common_special_phone(normalized)
+    if special_phone is not None:
+        return special_phone
     return MANDARIN_PHONE_FOLD_MAP.get(normalized, normalized)
 
 

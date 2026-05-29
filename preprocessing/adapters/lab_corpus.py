@@ -30,10 +30,13 @@ def _default_phone_normalizer(source_dataset: str) -> Callable[[str], str] | Non
         "ONIKU_KURUMI_UTAGOE_DB",
         "PJS_corpus_ver1.1",
         "enunu_kodoku_database_20220807-2",
+        # TODO: itako has some cases where it has back-to-back SP or AP (eg SP SP SP AP AP)
+        # and these should be merged
         "itako_singing",
         "nit070_db",
         "ritsu",
         "tiger_jp",
+        "no7singing",
     }:
         return lambda label: normalize_japanese_dataset_phone(
             label,
@@ -52,6 +55,7 @@ def adapt_simple_lab_pair(
     metadata: dict[str, object] | None = None,
     phone_normalizer: Callable[[str], str] | None = None,
     include_audio_metadata: bool = False,
+    repair_invalid_intervals: bool = False,
 ) -> object:
     """Adapt a simple `.lab` + audio pair into a canonical example."""
     audio_path_obj = Path(audio_path)
@@ -75,10 +79,15 @@ def adapt_simple_lab_pair(
         source_dataset=source_dataset,
         label_path=str(label_path_obj),
         phone_normalizer=resolved_phone_normalizer,
-        audio_sampling_rate=None if audio_metadata is None else audio_metadata.sample_rate,
-        audio_num_samples=None if audio_metadata is None else audio_metadata.num_samples,
+        audio_sampling_rate=None
+        if audio_metadata is None
+        else audio_metadata.sample_rate,
+        audio_num_samples=None
+        if audio_metadata is None
+        else audio_metadata.num_samples,
         speaker_id=speaker_id,
         metadata={} if metadata is None else dict(metadata),
+        repair_invalid_intervals=repair_invalid_intervals,
     )
 
 

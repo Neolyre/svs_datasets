@@ -38,11 +38,12 @@ def _note_intervals_from_item(item: dict[str, Any]) -> tuple[NoteInterval, ...]:
     for note, duration, is_slur in zip(notes, note_durations, slur_flags, strict=True):
         start_sec = cursor
         end_sec = cursor + duration
+        # TODO: lyrics
         note_intervals.append(
             NoteInterval(
                 start_sec=start_sec,
                 end_sec=end_sec,
-                lyric=note,
+                pitch_midi=note,
                 is_slur=is_slur,
             )
         )
@@ -194,8 +195,12 @@ def adapt_m4singer_item(
         utterance_id=item_name,
         source_dataset="m4singer",
         raw_format="m4singer_textgrid",
-        audio_sampling_rate=None if audio_metadata is None else audio_metadata.sample_rate,
-        audio_num_samples=None if audio_metadata is None else audio_metadata.num_samples,
+        audio_sampling_rate=None
+        if audio_metadata is None
+        else audio_metadata.sample_rate,
+        audio_num_samples=None
+        if audio_metadata is None
+        else audio_metadata.num_samples,
         lyrics_text=str(item["txt"]),
         phone_intervals=phone_intervals,
         word_intervals=word_intervals,

@@ -29,17 +29,17 @@ def _split_popcs_phone_sidecar(text: str) -> tuple[str, ...]:
 
 
 def _normalize_popcs_phone_intervals(
-    phone_intervals: tuple[Interval, ...],
+    phone_tier: TextGridTier,
 ) -> tuple[Interval, ...]:
     return tuple(
         Interval(
             label=normalize_mandarin_dataset_phone(
-                interval.label, source_dataset="popcs"
+                interval.text or "SP", source_dataset="popcs"
             ),
             start_sec=interval.start_sec,
             end_sec=interval.end_sec,
         )
-        for interval in phone_intervals
+        for interval in phone_tier.intervals
     )
 
 
@@ -93,7 +93,7 @@ def adapt_popcs_example(
     textgrid = parse_textgrid(textgrid_text)
     (phone_tier_index, phone_tier), syllable_tier_info = _choose_popcs_tiers(textgrid)
 
-    phone_intervals = _normalize_popcs_phone_intervals(phone_tier.labeled_intervals())
+    phone_intervals = _normalize_popcs_phone_intervals(phone_tier)
     if not phone_intervals:
         raise ValueError("popcs phone tier did not contain any labeled intervals")
 
@@ -124,6 +124,7 @@ def adapt_popcs_example(
             phone_intervals
         )
 
+    phone_sequence = tuple(interval.label for interval in phone_intervals)
     clip_stem = audio_path_obj.stem.removesuffix("_wf0")
     audio_metadata = (
         read_audio_metadata(audio_path_obj, resolve=False)
@@ -143,7 +144,7 @@ def adapt_popcs_example(
         audio_sampling_rate=None if audio_metadata is None else audio_metadata.sample_rate,
         audio_num_samples=None if audio_metadata is None else audio_metadata.num_samples,
         lyrics_text=lyrics_text,
-        phone_sequence=sidecar_phone_tokens,
+        phone_sequence=phone_sequence,
         phone_intervals=phone_intervals,
         word_intervals=word_intervals,
         line_start_sec=phone_intervals[0].start_sec,

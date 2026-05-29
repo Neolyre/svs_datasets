@@ -39,9 +39,14 @@ load_dataset(
 `dataset` may be a `Dataset` enum member, enum value string, enum name, or a
 small alias such as `"m4"` or `"open_cpop"`. `dataset_root` is the directory for
 that specific dataset, not the language parent directory. Progress bars are shown
-with `tqdm`. Usually the root is just the root after the dataset zip/tarball has been
+with `tqdm`.
+
+Usually the root is just the root after the dataset zip/tarball has been
 extracted, with the exception of datasets that contain multiple languages such as
 TIGER and GTSinger, in which case the root must point to a particular language split.
+Also, for Ritsu, it expects one folder up (e.g. `ritsu/「波音リツ」歌声データベースVer2.0.2`,
+this is to be compatible with multiple Ritsu voicebanks), and we only use the sung split of
+Sung and Spoken (duh).
 
 Set `include_audio_metadata=True` when metadata like sample rate/sample count are
 necessary and leave it disabled otherwise.
@@ -127,3 +132,24 @@ All three dataclasses provide `to_dict()` / `from_dict()` helpers.
 - `NIT070_DB` -> `"nit070_db"`
 - `TIGER_EN` -> `"tiger_en"`
 - `TIGER_JP` -> `"tiger_jp"`
+
+### Types of silence
+
+"AP" and "SP" are used to describe breath sounds ("aspirated pause")
+and silence ("silent pause") respectively. However, the way these are
+treated differs greatly across datasets, and are sometimes not even
+consistent within a dataset.
+
+For instance, AP (or its equivalents such as pau or br) is sometimes
+used to label a stretch of a few seconds that only has the breath at the end,
+which should really be a long SP interval followed by a short AP. Or a song
+might end with an AP annotation, which doesn't make sense - if there is trailing
+silence it should be SP.
+
+This needs to be addressed somehow somewhere, probably in preprocessing.
+One possibility is to normalize silence handling across all datasets in a
+preprocessing step: group all intervals marked as any form of silence
+and use a heuristic such as energy to determine which spans are truly silent
+and which are breath sounds. This has the added benefit of being helpful downstream
+for forced alignment, where AP/SP annotations are sparse, because the same
+heuristic can be used to determine these from the audio.

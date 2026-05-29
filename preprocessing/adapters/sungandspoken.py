@@ -7,6 +7,7 @@ from pathlib import Path
 from core.types import CanonicalExample, Interval
 from preprocessing.audio import read_audio_metadata
 from preprocessing.labels.lab import parse_lab_text
+from preprocessing.phonesets import normalize_english_dataset_phone
 
 
 def _clip_overlapping_intervals(intervals: tuple[Interval, ...]) -> tuple[Interval, ...]:
@@ -51,7 +52,14 @@ def adapt_sungandspoken_pair(
     performance_mode = audio_path_obj.parent.name
 
     phone_intervals = _clip_overlapping_intervals(
-        parse_lab_text(label_text, time_unit="seconds")
+        parse_lab_text(
+            label_text,
+            time_unit="seconds",
+            phone_normalizer=lambda label: normalize_english_dataset_phone(
+                label,
+                source_dataset=source_dataset,
+            ),
+        )
     )
 
     return CanonicalExample(

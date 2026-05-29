@@ -197,6 +197,7 @@ def _load_lab_paths(
                 source_dataset=source_dataset,
                 utterance_id=utterance_id,
                 include_audio_metadata=include_audio_metadata,
+                repair_invalid_intervals=source_dataset == Dataset.ITAKO_SINGING.value,
             )
         )
     return tuple(examples)

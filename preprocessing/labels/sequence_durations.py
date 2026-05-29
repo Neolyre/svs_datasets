@@ -115,6 +115,7 @@ def _durations_to_note_intervals(
             NoteInterval(
                 start_sec=start_sec,
                 end_sec=end_sec,
+                # TODO: this isn't actually a lyric sometimes (eg "B3", "G#4")
                 lyric=note,
                 is_slur=None if is_slur is None else is_slur[index],
             )
@@ -158,7 +159,9 @@ def parse_sequence_duration_row(
         row.get(phone_sequence_key), separator=token_separator
     )
     if not phone_sequence:
-        raise ValueError("sequence-duration row must provide a non-empty phone sequence")
+        raise ValueError(
+            "sequence-duration row must provide a non-empty phone sequence"
+        )
     if phone_normalizer is not None:
         phone_sequence = tuple(phone_normalizer(phone) for phone in phone_sequence)
 

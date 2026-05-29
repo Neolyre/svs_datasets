@@ -45,6 +45,7 @@ def parse_lab_text(
     time_unit: str = "auto",
     drop_empty: bool = True,
     phone_normalizer: Callable[[str], str] | None = None,
+    repair_invalid_intervals: bool = False,
 ) -> tuple[Interval, ...]:
     """Parse a simple `.lab` payload into canonical intervals.
 
@@ -75,16 +76,25 @@ def parse_lab_text(
 
     actual_time_unit = _infer_lab_time_unit(rows) if time_unit == "auto" else time_unit
     intervals: list[Interval] = []
+    previous_end: float | None = None
     for start_raw, end_raw, label in rows:
         if drop_empty and not label:
             continue
+        start_sec = _convert_time(start_raw, time_unit=actual_time_unit)
+        end_sec = _convert_time(end_raw, time_unit=actual_time_unit)
+        if repair_invalid_intervals:
+            if previous_end is not None and start_sec < previous_end:
+                start_sec = previous_end
+            if end_sec < start_sec:
+                end_sec = start_sec
         intervals.append(
             Interval(
                 label=label,
-                start_sec=_convert_time(start_raw, time_unit=actual_time_unit),
-                end_sec=_convert_time(end_raw, time_unit=actual_time_unit),
+                start_sec=start_sec,
+                end_sec=end_sec,
             )
         )
+        previous_end = end_sec
     return tuple(intervals)
 
 
@@ -101,12 +111,14 @@ def parse_lab_example(
     audio_num_samples: int | None = None,
     speaker_id: str | None = None,
     metadata: dict[str, object] | None = None,
+    repair_invalid_intervals: bool = False,
 ) -> CanonicalExample:
     """Parse one simple `.lab` payload into a canonical full-label example."""
     phone_intervals = parse_lab_text(
         text,
         time_unit=time_unit,
         phone_normalizer=phone_normalizer,
+        repair_invalid_intervals=repair_invalid_intervals,
     )
     if not phone_intervals:
         raise ValueError("a .lab example must contain at least one phone interval")

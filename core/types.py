@@ -326,6 +326,25 @@ class CanonicalExample:
             metadata=({} if data.get("metadata") is None else dict(data["metadata"])),
         )
 
+    def __str__(self) -> str:
+        return (
+            f"CanonicalExample(\n"
+            f"  utterance_id={self.utterance_id!r},\n"
+            f"  source_dataset={self.source_dataset!r},\n"
+            f"  raw_format={self.raw_format!r},\n"
+            f"  audio_path={self.audio_path!r},\n"
+            "  intervals=[\n    "
+            + ",\n    ".join(str(interval) for interval in (self.phone_intervals or []))
+            + "\n  ],\n"
+            "  word_intervals=[\n    "
+            + ",\n    ".join(str(interval) for interval in (self.word_intervals or []))
+            + "\n  ],\n"
+            "  note_intervals=[\n    "
+            + ",\n    ".join(str(interval) for interval in (self.note_intervals or []))
+            + "\n  ]\n"
+            ")"
+        )
+
 
 __all__ = [
     "CanonicalExample",
